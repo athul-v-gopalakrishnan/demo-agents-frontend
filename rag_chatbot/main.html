@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RAG Chatbot UI</title>
+  <style>
+    :root {
+      --primary: #00f0ff;
+      --secondary: #ff00f0;
+      --dark: #0a0a20;
+      --light: #f0f0ff;
+      --accent: #7b00ff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      display: flex;
+      background-color: var(--dark);
+      color: var(--light);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 300px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1.5rem;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar h2 {
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-top: 1rem;
+      color: var(--light);
+    }
+
+    input[type="file"],
+    input[type="range"] {
+      margin-top: 0.5rem;
+      width: 100%;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    .value {
+      font-weight: 500;
+      text-align: right;
+    }
+
+    .sidebar button {
+      margin-top: 1rem;
+      padding: 0.7rem;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(45deg, var(--primary), var(--accent));
+      color: var(--dark);
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .sidebar button:hover {
+      box-shadow: 0 5px 15px rgba(0, 240, 255, 0.4);
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem;
+    }
+
+    .chat-window {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-message {
+      margin: 0.5rem 0;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      max-width: 75%;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .user {
+      align-self: flex-end;
+      background-color: rgba(0, 240, 255, 0.2);
+    }
+
+    .ai {
+      align-self: flex-start;
+      background-color: rgba(123, 0, 255, 0.2);
+    }
+
+    .chat-input {
+      display: flex;
+      margin-top: 1rem;
+    }
+
+    .chat-input textarea {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--light);
+      resize: none;
+    }
+
+    .chat-input button {
+      margin-left: 1rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(45deg, var(--primary), var(--accent));
+      color: var(--dark);
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .chat-input button:hover {
+      box-shadow: 0 5px 15px rgba(0, 240, 255, 0.4);
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Controls</h2>
+    <label for="pdfs">Upload PDFs</label>
+    <input type="file" id="pdfs" multiple>
+
+    <label for="temperature">Temperature</label>
+    <input type="range" id="temperature" min="0" max="1" step="0.01" value="0.7" oninput="updateSlider('temperature')">
+    <div class="slider-label">
+      <span>0.0</span><span id="temperature-value" class="value">0.70</span><span>1.0</span>
+    </div>
+
+    <label for="maxRet">Max Retrievals</label>
+    <input type="range" id="maxRet" min="1" max="10" step="1" value="3" oninput="updateSlider('maxRet')">
+    <div class="slider-label">
+      <span>1</span><span id="maxRet-value" class="value">3</span><span>10</span>
+    </div>
+
+    <button onclick="uploadPDFs()">Upload</button>
+    <button onclick="clearDb()">Clear Database</button>
+  </div>
+
+  <div class="main">
+    <div class="chat-window" id="chat-window"></div>
+    <div class="chat-input">
+      <textarea id="question" placeholder="Type your question..." rows="2"></textarea>
+      <button onclick="askQuestion()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const backendUrl = "http://localhost:8000";
+
+    function updateSlider(id) {
+      const val = document.getElementById(id).value;
+      document.getElementById(`${id}-value`).innerText = id === 'temperature' ? parseFloat(val).toFixed(2) : val;
+    }
+
+    function appendMessage(role, text) {
+      const chatWindow = document.getElementById("chat-window");
+      const message = document.createElement("div");
+      message.className = `chat-message ${role}`;
+      message.innerText = text;
+      chatWindow.appendChild(message);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    async function uploadPDFs() {
+      const input = document.getElementById("pdfs");
+      const files = input.files;
+      if (!files.length) return alert("Select at least one PDF.");
+
+      const formData = new FormData();
+      for (const file of files) formData.append("files", file);
+
+      const res = await fetch(`${backendUrl}/rag_chatbot/upload`, {
+        method: "POST",
+        body: formData
+      });
+
+      const data = await res.json();
+      alert(data.message || "Upload complete.");
+    }
+
+    async function clearDb() {
+      const res = await fetch(`${backendUrl}/rag_chatbot/clear_db`, { method: "POST" });
+      const data = await res.json();
+      alert(data.message || "DB Cleared.");
+    }
+
+    function appendToLatestMessage(role, content) {
+      const messages = document.querySelectorAll(`.chat-message.${role}`);
+      if (!messages.length) return appendMessage(role, content);
+      messages[messages.length - 1].textContent += content;
+    }
+
+    async function askQuestion() {
+  const questionEl = document.getElementById("question");
+  const question = questionEl.value.trim();
+  if (!question) return;
+
+  const temperature = parseFloat(document.getElementById("temperature").value);
+  const maxRet = parseInt(document.getElementById("maxRet").value);
+
+  appendMessage("user", question);
+  questionEl.value = "";
+
+  const res = await fetch(`${backendUrl}/rag_chatbot/query`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question, temperature, max_retrievals: maxRet })
+  });
+
+  if (!res.ok) return appendMessage("ai", "Error: Unable to fetch response.");
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let result = "";
+  
+  // Create new AI message element for this response
+  let aiMessage = document.createElement("div");
+  aiMessage.className = "chat-message ai";
+  aiMessage.textContent = "";
+  const chatWindow = document.getElementById("chat-window");
+  chatWindow.appendChild(aiMessage);
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    
+    const chunk = decoder.decode(value, { stream: true });
+    result += chunk;
+    aiMessage.textContent += chunk;
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  if (!result.trim()) {
+    aiMessage.textContent = "No answer returned.";
+  }
+}
+  </script>
+</body>
+</html>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextGen AI Solutions | Interactive Demos</title>
+    <style>
+        :root {
+            --primary: #00f0ff;
+            --secondary: #ff00f0;
+            --dark: #0a0a20;
+            --light: #f0f0ff;
+            --accent: #7b00ff;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(123, 0, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(0, 240, 255, 0.15) 0%, transparent 50%);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 3rem;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, rgb(255, 0, 0), rgb(255, 94, 0));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-decoration: none;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            position: relative;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 4rem 0;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%);
+            transform: rotate(30deg);
+            z-index: -1;
+            transition: all 0.5s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 240, 255, 0.1);
+            border-color: rgba(0, 240, 255, 0.3);
+        }
+        
+        .card:hover::before {
+            transform: rotate(60deg);
+        }
+        
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+        
+        .card p {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            opacity: 0.8;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.8rem;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            color: var(--dark);
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 240, 255, 0.4);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            margin-left: 1rem;
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary);
+            color: var(--dark);
+        }
+        
+        .section {
+            margin: 6rem 0;
+        }
+        
+        .section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: var(--primary);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section h2::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+        }
+        
+        .comparison {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 3rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .comparison-item {
+            margin-bottom: 2rem;
+        }
+        
+        .comparison-item h4 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+        
+        .comparison-item ul {
+            list-style-type: none;
+        }
+        
+        .comparison-item li {
+            margin-bottom: 0.5rem;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+        
+        .comparison-item li::before {
+            content: '▹';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 3rem 0;
+            margin-top: 4rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .btn {
+                display: block;
+                width: 100%;
+                margin-bottom: 1rem;
+            }
+            
+            .btn-outline {
+                margin-left: 0;
+            }
+        }
+        
+        /* Animations */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles-js"></div>
+    
+    <div class="container">
+        <header>
+            <a href="#" class="logo">NEO<span style="color: white">ITO</span></a>
+            <div>
+                <a href="#demos" class="btn btn-outline">View Demos</a>
+            </div>
+        </header>
+        
+        <section class="hero">
+            <h1>Experience the Future of AI Interaction</h1>
+            <p>Explore our cutting-edge AI demonstrations showcasing the power of Agentic AI and RAG-enhanced chatbots. See how these technologies can transform your business workflows.</p>
+            <div>
+                <a href="#demos" class="btn">Try Demos Now</a>
+                <a href="#learn" class="btn btn-outline">Learn More</a>
+            </div>
+        </section>
+        
+        <section id="demos" class="section">
+            <h2>Interactive AI Demos</h2>
+            <p>Each demo runs on its own dedicated backend. Click to experience different AI capabilities.</p>
+            
+            <div class="grid">
+                <div class="card floating" style="animation-delay: 0s;">
+                    <h3>Agentic RAG Chatbot</h3>
+                    <p>An autonomous chatbot that can handle customer interaction powered with RAG and cutting edge AI models.</p>
+                    <a href="rag_chatbot/main.html" class="btn" target="_blank">Launch Demo</a>
+                </div>
+                
+                <div class="card floating" style="animation-delay: 0.5s;">
+                    <h3>RAG-Powered Agreement Analyzer</h3>
+                    <p>A retrieval-augmented chatbot that analyzes documents like agreements and give insights.</p>
+                    <a href="document_analyzer/main.html" class="btn" target="_blank">Launch Demo</a>
+                </div>
+                
+                <!-- <div class="card floating" style="animation-delay: 1s;">
+                    <h3>Multi-Agent System</h3>
+                    <p>Watch multiple AI agents collaborate to solve problems, demonstrating emergent behaviors and distributed intelligence.</p>
+                    <a href="YOUR_RENDER_LINK_3" class="btn" target="_blank">Launch Demo</a>
+                </div> -->
+            </div>
+        </section>
+        
+        <section id="learn" class="section">
+            <h2>Understanding the Technology</h2>
+            
+            <div class="comparison">
+                <div class="comparison-item">
+                    <h4>Agentic AI</h4>
+                    <ul>
+                        <li>Autonomous systems that can plan and execute tasks</li>
+                        <li>Capable of making decisions with minimal human input</li>
+                        <li>Can break down complex problems into sub-tasks</li>
+                        <li>Potential to operate continuously without supervision</li>
+                    </ul>
+                </div>
+                
+                <div class="comparison-item">
+                    <h4>RAG Chatbots</h4>
+                    <ul>
+                        <li>Retrieval-Augmented Generation combines LLMs with external knowledge</li>
+                        <li>Can access and reference up-to-date information</li>
+                        <li>Reduces hallucinations compared to pure LLMs</li>
+                        <li>Easily customized with domain-specific data</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <section class="section">
+            <h2>Considerations & Challenges</h2>
+            
+            <div class="grid">
+                <div class="card">
+                    <h3>Agentic AI Challenges</h3>
+                    <ul>
+                        <li>Requires careful goal alignment</li>
+                        <li>Potential for unpredictable behaviors</li>
+                        <li>Higher computational costs</li>
+                        <li>Need for robust monitoring systems</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h3>RAG Limitations</h3>
+                    <ul>
+                        <li>Dependent on quality of knowledge base</li>
+                        <li>Retrieval can introduce latency</li>
+                        <li>Still prone to some hallucination</li>
+                        <li>Requires good document chunking strategy</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>© 2023 AI Demo Platform. All rights reserved.</p>
+            <p>Contact: <a href="mailto:demos@yourcompany.com" style="color: var(--primary)">demos@yourcompany.com</a></p>
+        </footer>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        // Initialize particle.js background
+        document.addEventListener('DOMContentLoaded', function() {
+            particlesJS('particles-js', {
+                "particles": {
+                    "number": {
+                        "value": 80,
+                        "density": {
+                            "enable": true,
+                            "value_area": 800
+                        }
+                    },
+                    "color": {
+                        "value": "#00f0ff"
+                    },
+                    "shape": {
+                        "type": "circle",
+                        "stroke": {
+                            "width": 0,
+                            "color": "#000000"
+                        },
+                        "polygon": {
+                            "nb_sides": 5
+                        }
+                    },
+                    "opacity": {
+                        "value": 0.3,
+                        "random": false,
+                        "anim": {
+                            "enable": false,
+                            "speed": 1,
+                            "opacity_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "size": {
+                        "value": 3,
+                        "random": true,
+                        "anim": {
+                            "enable": false,
+                            "speed": 40,
+                            "size_min": 0.1,
+                            "sync": false
+                        }
+                    },
+                    "line_linked": {
+                        "enable": true,
+                        "distance": 150,
+                        "color": "#7b00ff",
+                        "opacity": 0.2,
+                        "width": 1
+                    },
+                    "move": {
+                        "enable": true,
+                        "speed": 2,
+                        "direction": "none",
+                        "random": false,
+                        "straight": false,
+                        "out_mode": "out",
+                        "bounce": false,
+                        "attract": {
+                            "enable": false,
+                            "rotateX": 600,
+                            "rotateY": 1200
+                        }
+                    }
+                },
+                "interactivity": {
+                    "detect_on": "canvas",
+                    "events": {
+                        "onhover": {
+                            "enable": true,
+                            "mode": "grab"
+                        },
+                        "onclick": {
+                            "enable": true,
+                            "mode": "push"
+                        },
+                        "resize": true
+                    },
+                    "modes": {
+                        "grab": {
+                            "distance": 140,
+                            "line_linked": {
+                                "opacity": 1
+                            }
+                        },
+                        "bubble": {
+                            "distance": 400,
+                            "size": 40,
+                            "duration": 2,
+                            "opacity": 8,
+                            "speed": 3
+                        },
+                        "repulse": {
+                            "distance": 200,
+                            "duration": 0.4
+                        },
+                        "push": {
+                            "particles_nb": 4
+                        },
+                        "remove": {
+                            "particles_nb": 2
+                        }
+                    }
+                },
+                "retina_detect": true
+            });
+            
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

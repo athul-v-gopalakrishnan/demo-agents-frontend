@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agreement Summary & Chat</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: #0a0a20;
+      color: #fff;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+
+    .summary-panel {
+      width: 40%;
+      padding: 1.5rem;
+      background-color: #111827;
+      border-right: 1px solid #1f2937;
+      overflow-y: auto;
+    }
+
+    .chat-panel {
+      width: 60%;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+      background-color: #0a0a20;
+    }
+
+    .chat-box {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 1rem;
+    }
+
+    .chat-entry {
+      margin-bottom: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 1rem;
+      max-width: fit-content;
+      word-wrap: pre-wrap;
+    }
+
+    .user {
+      background-color: rgba(0, 240, 255, 0.2);
+      color: #fff;
+      margin-left: auto;
+      text-align: right;
+      line-height: 2;
+    }
+
+    .bot {
+      background-color: rgba(123, 0, 255, 0.2);
+      color: #f9fafb;
+      margin-right: auto;
+      text-align: left;
+    }
+
+    .chat-input {
+      display: flex;
+      margin-top: 1rem;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #374151;
+      background-color: #111827;
+      color: white;
+      border-radius: 8px 0 0 8px;
+    }
+
+    .chat-input button {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: linear-gradient(135deg, #00f0ff, #ff00f0);
+      color: white;
+      font-weight: bold;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+    }
+
+    button#genBtn {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: linear-gradient(135deg, #00f0ff, #ff00f0);
+      color: white;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Summary Panel -->
+    <div class="summary-panel">
+      <h2>Agreement Summary</h2>
+      <button onclick="generateSummary()" id="genBtn">Generate Summary</button>
+      <div id="summaryContent" style="display:none; margin-top:1rem;">
+        <div>
+          <h3>Advantages</h3>
+          <ul id="advantages"></ul>
+          <h3>Disadvantages</h3>
+          <ul id="disadvantages"></ul>
+          <h3>Score</h3>
+          <div id="score"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Panel -->
+    <div class="chat-panel">
+      <div class="chat-box" id="chatBox"></div>
+      <div class="chat-input">
+        <input type="text" id="chatInput" placeholder="Ask a question..." />
+        <button onclick="sendQuery()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+    const summaryDiv = document.getElementById("summaryContent");
+    const advDiv = document.getElementById("advantages");
+    const disadvDiv = document.getElementById("disadvantages");
+    const scoreDiv = document.getElementById("score");
+    const genBtn = document.getElementById("genBtn");
+    const chatBox = document.getElementById("chatBox");
+    const chatInput = document.getElementById("chatInput");
+
+    async function generateSummary() {
+      genBtn.disabled = true;
+      genBtn.textContent = "Generating...";
+
+      try {
+        const res = await fetch("http://localhost:8000/analyzer/generate_summary");
+        const data = await res.json();
+        if (data) {
+          formatBullets(data.advantages, advDiv);
+          formatBullets(data.disadvantages, disadvDiv);
+          scoreDiv.textContent = data.score;
+          summaryDiv.style.display = "block";
+          genBtn.style.display = "none";
+        } else {
+          summaryDiv.textContent = "Failed to generate summary.";
+        }
+      } catch (err) {
+        console.error(err);
+        summaryDiv.textContent = "Server error.";
+      }
+    }
+
+    function addMessage(content, sender) {
+      const msg = document.createElement("div");
+      msg.className = `chat-entry ${sender}`;
+      msg.innerHTML = content;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function appendToLatestMessage(role, content) {
+      const messages = document.querySelectorAll(`.chat-entry.${role}`);
+      if (!messages.length) {
+        content = marked.parse(content);
+        addMessage(content, role);
+        return;
+      }
+
+      const last = messages[messages.length - 1];
+      last.innerHTML += marked.parse(content);
+    }
+
+    async function sendQuery() {
+  const question = chatInput.value.trim();
+  if (!question) return;
+
+  addMessage(question, "user");
+  chatInput.value = "";
+
+  try {
+    const res = await fetch("http://localhost:8000/analyzer/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question })
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let result = "";
+    let botMessage = document.createElement("div");
+    botMessage.className = "chat-entry bot";
+    chatBox.appendChild(botMessage);
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      result += chunk;
+      botMessage.innerHTML += marked.parse(chunk);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    if (!result.trim()) {
+      botMessage.innerHTML = "No answer returned.";
+    }
+  } catch (err) {
+    addMessage("Error retrieving answer.", "bot");
+    console.error(err);
+  }
+}
+
+    function formatBullets(text, element) {
+      if (!text) return;
+      text.split("\n").forEach(line => {
+        const listItem = document.createElement("li");
+        listItem.textContent = line;
+        element.appendChild(listItem);
+      });
+    }
+  </script>
+</body>
+
+</html>
