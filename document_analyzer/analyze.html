@@ -148,7 +148,7 @@
       genBtn.textContent = "Generating...";
 
       try {
-        const res = await fetch("http://localhost:8000/analyzer/generate_summary");
+        const res = await fetch("https://demo-agents-backend.onrender.com/analyzer/generate_summary");
         const data = await res.json();
         if (data) {
           formatBullets(data.advantages, advDiv);
@@ -193,7 +193,7 @@
   chatInput.value = "";
 
   try {
-    const res = await fetch("http://localhost:8000/analyzer/chat", {
+    const res = await fetch("https://demo-agents-backend.onrender.com/analyzer/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question })
